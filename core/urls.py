@@ -1,9 +1,11 @@
 from django.urls import path
-from .views import hello,health,index
+from .views import hello,health,document_list,document_list_using_Serializer,add_document
 
 
 urlpatterns = [
     path('/', hello),
     path('health/',health),
-    path('index/', index)
+    path('documents/',document_list),
+    path('documents-serializer/',document_list_using_Serializer),
+    path('document/add',add_document)
 ]
