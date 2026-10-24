@@ -12,3 +12,8 @@ def hello(request):
 @api_view(['GET'])
 def health(request):
     return Response({"status": "healthy"})
+
+
+def index(request):
+    if request.method == 'GET':
+        return {"message": "AI Knowledge Assistant API is running"}
