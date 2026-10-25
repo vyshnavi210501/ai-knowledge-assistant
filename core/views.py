@@ -31,16 +31,44 @@ def document_list(request):
 if we dont want to use for loop and mention all fields explicity we can use serializers to convert
  the model instances to JSON format.
 """
-@api_view(['GET',"POST"])
-def document_list_using_Serializer(request):
+@api_view(['GET',"POST",'PUT','DELETE','PATCH'])
+def document_list_using_Serializer(request,pk=None):
     if request.method == 'POST':
         serializer = DocumentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
-    documents = Document.objects.all()
-    serializer = DocumentSerializer(documents, many=True)
+    elif request.method == 'PUT':
+        try:
+            document = Document.objects.get(pk=pk)
+        except Document.DoesNotExist:
+            return Response({"error": "Document not found"}, status=404)
+
+        serializer = DocumentSerializer(document, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+    elif request.method=='DELETE':
+        try:
+            document=Document.objects.get(pk=pk)
+            document.delete()
+            return Response({"message": "Document deleted successfully"},status=204)
+        except Document.DoesNotExist:
+            return Response({"error": "Document not found"}, status=404)
+    elif request.method=='PATCH':
+        try:
+            document=Document.objects.get(pk=pk)
+            serializer = DocumentSerializer(document, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=400)
+        except Document.DoesNotExist:
+            return Response({"error": "Document not found"}, status=404)
+    document = Document.objects.get(pk=pk)
+    serializer = DocumentSerializer(document)
     return Response(serializer.data)
 
 """

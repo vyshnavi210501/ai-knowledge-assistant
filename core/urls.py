@@ -6,6 +6,6 @@ urlpatterns = [
     path('/', hello),
     path('health/',health),
     path('documents/',document_list),
-    path('documents-serializer/',document_list_using_Serializer),
+    path('documents-serializer/<int:pk>/',document_list_using_Serializer),
     path('document/add',add_document)
 ]
