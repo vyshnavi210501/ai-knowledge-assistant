@@ -3,6 +3,10 @@ from rest_framework.decorators import api_view,permission_classes
 from .models import Document
 from .document_serializer import DocumentSerializer
 from rest_framework.permissions import IsAuthenticated
+from .DocumentPagination import DocumentPagination
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.generics import ListAPIView
 
 # Create your views here.
 
@@ -21,12 +25,23 @@ this function retrieves a list of all documents from the database and returns
 them as a JSON response. Each document is represented as a dictionary containing its id, 
 title, and content.
 """
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def document_list(request):
-    documents = Document.objects.filter(owner=request.user)
-    document_data = [{"id": doc.id, "title": doc.title, "content": doc.content,"owner": doc.owner.username} for doc in documents]
-    return Response(document_data)
+class DocumentListView(ListAPIView):
+    """View to list all documents for the authenticated user with pagination, search, and ordering support.updated this get apiview to use 
+    ListAPIView which is a generic view that provides built-in support for listing objects and handling pagination, filtering, and ordering."""
+
+    serializer_class = DocumentSerializer
+    permission_classes = [IsAuthenticated]
+
+    pagination_class = DocumentPagination
+
+    filter_backends = [SearchFilter, OrderingFilter]
+
+    search_fields = ['title', 'content']
+
+    ordering_fields = ['title', 'created_at']
+
+    def get_queryset(self):
+        return Document.objects.filter(owner=self.request.user)
 
 
 """
