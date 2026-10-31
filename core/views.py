@@ -34,12 +34,14 @@ class DocumentListView(ListAPIView):
 
     pagination_class = DocumentPagination
 
-    filter_backends = [SearchFilter, OrderingFilter]
+    filter_backends = [SearchFilter, OrderingFilter,DjangoFilterBackend]
 
     search_fields = ['title', 'content']
 
     ordering_fields = ['title', 'created_at']
-
+    filterset_fields = {
+    'created_at': ['date__exact', 'date__gte', 'date__lte']
+}
     def get_queryset(self):
         return Document.objects.filter(owner=self.request.user)
 
