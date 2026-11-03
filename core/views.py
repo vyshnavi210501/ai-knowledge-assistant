@@ -1,12 +1,13 @@
 from rest_framework.response import Response
-from rest_framework.decorators import api_view,permission_classes
+from rest_framework.decorators import api_view,permission_classes,parser_classes
 from .models import Document
 from .document_serializer import DocumentSerializer
 from rest_framework.permissions import IsAuthenticated
 from .DocumentPagination import DocumentPagination
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView
+from rest_framework.parsers import MultiPartParser, FormParser
 
 # Create your views here.
 
@@ -88,11 +89,10 @@ def document_list_using_Serializer(request,pk=None):
 """
 add document to the database using serializer. we can use POST method to add document to the database.
 """
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def add_document(request):
-    serializer = DocumentSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(owner=request.user)  # Set the owner to the authenticated user
-        return Response(serializer.data, status=201)
-    return Response(serializer.errors, status=400)
+class DocumentCreateView(CreateAPIView):
+    serializer_class = DocumentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
