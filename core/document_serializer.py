@@ -27,7 +27,8 @@ class DocumentSerializer(serializers.ModelSerializer):
     def validate_file(self, uploaded_file):
         # 1. Check file size (5 MB)
         max_size = 5 * 1024 * 1024
-
+        if uploaded_file is None:
+            raise serializers.ValidationError("No file was uploaded.")
         if uploaded_file.size > max_size:
             raise serializers.ValidationError(
                 "File size cannot exceed 5 MB."
