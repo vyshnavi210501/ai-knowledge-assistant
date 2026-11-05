@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from .services import document_extractor
+from rest_framework.views import APIView
 
 # Create your views here.
 
@@ -52,40 +53,68 @@ class DocumentListView(ListAPIView):
 if we dont want to use for loop and mention all fields explicity we can use serializers to convert
  the model instances to JSON format.
 """
-@api_view(['GET',"POST",'PUT','DELETE','PATCH'])
-@permission_classes([IsAuthenticated])
-def document_list_using_Serializer(request,pk=None):
-    if request.method == 'PUT':
+
+class DocumentListUsingSerializer(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DocumentSerializer
+    parser_classes = [MultiPartParser, FormParser]
+    def get(self, request, pk=None):
+        if pk is None:
+            documents = Document.objects.filter(owner=request.user)
+            serializer = DocumentSerializer(documents, many=True)
+            return Response(serializer.data)
+        else:
+            try:
+                document = Document.objects.get(pk=pk, owner=request.user)
+            except Document.DoesNotExist:
+                return Response({"error": "Document not found"}, status=404)
+            serializer = DocumentSerializer(document)
+            return Response(serializer.data)
+
+    def put(self, request, pk=None):
+        if pk is None:
+            return Response({"error": "Document ID is required"}, status=400)
         try:
             document = Document.objects.get(pk=pk,owner=request.user)
         except Document.DoesNotExist:
             return Response({"error": "Document not found"}, status=404)
 
-        serializer = DocumentSerializer(document, data=request.data)
+        serializer = DocumentSerializer(document, data=request.data,partial=True)
         if serializer.is_valid():
             serializer.save()  # Set the owner to the authenticated user",stat})
-            return Response({"message": "Document updated successfully"},status=204)
+            if serializer.validated_data.get("file"):
+                document.processing_status = "processing"
+                document.save()
+                document_extractor.add_file_content_to_database(document.file.path, document)
+        return Response({"message": "Document updated successfully"},status=204)
         return Response(serializer.errors, status=400)
-    elif request.method=='DELETE':
+    def delete(self, request, pk=None):
+        if pk is None:
+            return Response({"error": "Document ID is required"}, status=400)
         try:
             document=Document.objects.get(pk=pk,owner=request.user)
             document.delete()
             return Response({"message": "Document deleted successfully"},status=204)
         except Document.DoesNotExist:
             return Response({"error": "Document not found"}, status=404)
-    elif request.method=='PATCH':
+    def patch(self, request, pk=None):
+        if pk is None:
+            return Response({"error": "Document ID is required"}, status=400)
         try:
             document=Document.objects.get(pk=pk,owner=request.user)
             serializer = DocumentSerializer(document, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
+                if self.request.data.get("file"):
+                    document.processing_status = "processing"
+                    document.save()
+                    document_extractor.add_file_content_to_database(document.file.path, document)
                 return Response(serializer.data)
             return Response(serializer.errors, status=400)
         except Document.DoesNotExist:
             return Response({"error": "Document not found"}, status=404)
-    document = Document.objects.get(pk=pk,owner=request.user)
-    serializer = DocumentSerializer(document)
-    return Response(serializer.data)
+    def patch(self, request, pk=None):
+        return Response({"message": "PATCH method reached"})
 
 """
 add document to the database using serializer. we can use POST method to add document to the database.
@@ -100,4 +129,6 @@ class DocumentCreateView(CreateAPIView):
         print("document info",document)
         requested_file=self.request.data.get("file")
         if requested_file:
+            document.processing_status = "processing"
+            document.save()
             document_extractor.add_file_content_to_database(document.file.path, document)    

@@ -1,11 +1,11 @@
 from django.urls import path
-from .views import hello,health,DocumentListView,document_list_using_Serializer,DocumentCreateView
+from .views import hello,health,DocumentListView,DocumentListUsingSerializer,DocumentCreateView
 
 
 urlpatterns = [
     path('/', hello),
     path('health/',health),
     path('documents/',DocumentListView.as_view()),
-    path('documents-serializer/<int:pk>/',document_list_using_Serializer),
+    path('documents-serializer/<int:pk>/',DocumentListUsingSerializer.as_view()),
     path('document/add/',DocumentCreateView.as_view()),
 ]
