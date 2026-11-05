@@ -9,7 +9,7 @@ class Document(models.Model):
         related_name="documents",
     )
     title = models.CharField(max_length=255)
-    content = models.TextField()
+    content = models.TextField(default="", blank=True)
 
     file = models.FileField(
         upload_to="documents/",

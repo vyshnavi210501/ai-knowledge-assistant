@@ -15,8 +15,6 @@ from rest_framework.views import APIView
 
 @api_view(['GET'])
 def hello(request):
-    print(request.path)
-    print(request.method)
     return Response({"message": "AI Knowledge Assistant API is running"})
 
 @api_view(['GET'])
@@ -84,9 +82,10 @@ class DocumentListUsingSerializer(APIView):
             serializer.save()  # Set the owner to the authenticated user",stat})
             if serializer.validated_data.get("file"):
                 document.processing_status = "processing"
+                document.processing_error=""
                 document.save()
                 document_extractor.add_file_content_to_database(document.file.path, document)
-        return Response({"message": "Document updated successfully"},status=204)
+            return Response({"message": "Document updated successfully"},status=204)
         return Response(serializer.errors, status=400)
     def delete(self, request, pk=None):
         if pk is None:
@@ -102,7 +101,7 @@ class DocumentListUsingSerializer(APIView):
             return Response({"error": "Document ID is required"}, status=400)
         try:
             document=Document.objects.get(pk=pk,owner=request.user)
-            serializer = DocumentSerializer(document, data=request.data, partial=True)
+            serializer = DocumentSerializer(document, data=request.data, partial=False)
             if serializer.is_valid():
                 serializer.save()
                 if self.request.data.get("file"):
@@ -113,8 +112,6 @@ class DocumentListUsingSerializer(APIView):
             return Response(serializer.errors, status=400)
         except Document.DoesNotExist:
             return Response({"error": "Document not found"}, status=404)
-    def patch(self, request, pk=None):
-        return Response({"message": "PATCH method reached"})
 
 """
 add document to the database using serializer. we can use POST method to add document to the database.
@@ -126,7 +123,6 @@ class DocumentCreateView(CreateAPIView):
 
     def perform_create(self, serializer):
         document=serializer.save(owner=self.request.user)
-        print("document info",document)
         requested_file=self.request.data.get("file")
         if requested_file:
             document.processing_status = "processing"

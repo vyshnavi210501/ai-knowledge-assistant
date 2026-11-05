@@ -64,12 +64,16 @@ def add_file_content_to_database(file_path, document_instance):
     """
     try:
         extracted_text = extract_text_from_file(file_path)
-        if extracted_text:
+        print(f"Extracted text from {file_path}: {extracted_text[:100]}...")  # Print first 100 characters for debugging
+        if len(extracted_text.strip()) > 0:
             document_instance.processing_status = "completed"
-        document_instance.content = extracted_text
+            document_instance.content = extracted_text
+        else:
+            document_instance.processing_status = "failed"
+            document_instance.processing_error = "No text extracted from the file."
+        
         document_instance.save()
     except Exception as e:
         document_instance.processing_status = "failed"
         document_instance.processing_error = str(e)
         document_instance.save()
-        raise ValueError(f"Error adding file content to database: {e}")

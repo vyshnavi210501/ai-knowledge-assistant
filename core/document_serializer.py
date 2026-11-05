@@ -22,6 +22,8 @@ class DocumentSerializer(serializers.ModelSerializer):
             "file_size",
             "file_type",
             "uploaded_at",
+            "processing_status",
+            "processing_error"
         ]
 
     def validate_file(self, uploaded_file):
